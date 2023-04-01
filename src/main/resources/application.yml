@@ -14,3 +14,8 @@ spring:
 
   profiles:
     include: private
+
+server:
+  error:
+    whitelabel:
+      enabled: false

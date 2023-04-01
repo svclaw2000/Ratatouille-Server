@@ -1,0 +1,73 @@
+name: Release Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET_NAME: keich.park-deploy
+  CODE_DEPLOY_APPLICATION_NAME: ratatouille-app
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: ratatouille-deploy-group
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Setup gradlew
+        run: chmod +x gradlew
+
+      - name: Setup secrets
+        shell: bash
+        run: echo "${{secrets.PRIVATE_YML}}" > src/main/resources/application-private.yml
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Test with Gradle
+        run: ./gradlew test
+
+      - name: Make Directory for deliver
+        run: mkdir deploy
+
+      - name: Copy Jar
+        run: cp ./build/libs/*.jar ./deploy
+
+      - name: Make zip File
+        run: zip -r -qq -j ./$GITHUB_SHA.zip ./deploy
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to AWS S3
+        run: |
+          aws deploy push \
+            --application-name $CODE_DEPLOY_APPLICATION_NAME \
+            --ignore-hidden-files \
+            --s3-location s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip \
+            --source .
+
+      - name: Deploy to AWS EC2 from S3
+        run: |
+          aws deploy create-deployment \
+            --application-name $CODE_DEPLOY_APPLICATION_NAME \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --deployment-group-name $CODE_DEPLOY_DEPLOYMENT_GROUP_NAME \
+            --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip

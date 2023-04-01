@@ -1,0 +1,36 @@
+name: PR-Build
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Setup gradlew
+        run: chmod +x gradlew
+
+      - name: Setup secrets
+        shell: bash
+        env:
+          $PRIVATE_YML: ${{secrets.PRIVATE_YML}}
+        run: |
+          echo $PRIVATE_YML | base64 -d > src/main/resources/application-private.yml
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      - name: Test with Gradle
+        run: ./gradlew test

@@ -117,4 +117,4 @@ jobs:
       - name: Create and Merge Pull Request
         run: |
           gh pr create --title "Bump up version" --body "Bump up version to $newServerVersion" --base develop > pr_path
-          gh pr merge $(cat pr_path) -m --auto
+          gh pr merge $(cat pr_path) -m --admin

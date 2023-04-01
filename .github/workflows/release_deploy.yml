@@ -10,7 +10,7 @@ env:
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: ratatouille-deploy-group
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  GH_TOKEN: ${{ github.token }}
+  GH_TOKEN: ${{ secrets.COMMIT_TOKEN }}
 
 jobs:
   build:
@@ -116,5 +116,5 @@ jobs:
 
       - name: Create and Merge Pull Request
         run: |
-          gh pr create --title "Bump up version" --body "Bump up version to $newServerVersion" --base develop > pr_path
-          gh pr merge $(cat pr_path) -m --admin
+          gh pr create --title "Bump up version" --body "Bump up version to $(python scripts/get_version.py)" --base develop > pr_path
+          gh pr merge $(cat pr_path) -m --auto

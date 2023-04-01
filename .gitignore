@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 
 src/main/resources/application-private.yml
+deploy/
 
 ### STS ###
 .apt_generated

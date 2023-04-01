@@ -3,6 +3,8 @@ name: PR-Build
 on:
   pull_request:
     branches: [ "develop" ]
+  push:
+    branches: [ "develop" ]
   workflow_dispatch:
 
 jobs:
@@ -24,13 +26,10 @@ jobs:
 
       - name: Setup secrets
         shell: bash
-        env:
-          $PRIVATE_YML: ${{secrets.PRIVATE_YML}}
-        run: |
-          echo $PRIVATE_YML | base64 -d > src/main/resources/application-private.yml
+        run: echo "${{secrets.PRIVATE_YML}}" > src/main/resources/application-private.yml
 
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./gradlew clean build -x test
 
       - name: Test with Gradle
         run: ./gradlew test

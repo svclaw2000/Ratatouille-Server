@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.khnsoft"
-version = "0.0.1-SNAPSHOT"
+version = "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
@@ -41,4 +41,8 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.getByName<Jar>("jar") {
+    enabled = false
 }

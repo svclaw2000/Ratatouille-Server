@@ -31,7 +31,6 @@ jobs:
           python scripts/bump_up_version.py
 
       - name: Commit And Create Pull Request
-        env:
         run: |
           git checkout -b bump_up_version
           git config --local user.name "Keich.Park"

@@ -73,3 +73,24 @@ jobs:
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name $CODE_DEPLOY_DEPLOYMENT_GROUP_NAME \
             --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Checkout develop for bump up version
+        uses: actions/checkout@v3
+        with:
+          ref: "test"
+
+      - name: Bump Up Version
+        run: |
+          python scripts/bump_up_version.py
+
+      - name: Commit And Push
+        run: |
+          git config --local user.name "Version Up Bot"
+          git config --local user.email "svclaw2000@gmail.com"
+          git commit -am "Bump up version"
+          git push

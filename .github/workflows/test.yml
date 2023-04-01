@@ -1,0 +1,42 @@
+name: Test version up
+
+on:
+  push:
+    branches: [ "test" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Checkout develop for bump up version
+        uses: actions/checkout@v3
+        with:
+          ref: "test2"
+          token: ${{ github.token }}
+
+      - name: Bump Up Version
+        run: |
+          python scripts/bump_up_version.py
+
+      - name: Commit And Create Pull Request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git checkout -b bump_up_version
+          git config --local user.name "Keich.Park"
+          git config --local user.email "svclaw2000@gmail.com"
+          git commit -am "Bump up version"
+          git push origin bump_up_version
+          
+          gh pr create --title "Bump up version" --body "" --base test2 > pr_path
+          gh pr merge $(cat pr_path) -m --auto

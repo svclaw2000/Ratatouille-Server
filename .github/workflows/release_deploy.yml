@@ -82,7 +82,7 @@ jobs:
       - name: Checkout develop for bump up version
         uses: actions/checkout@v3
         with:
-          ref: "test"
+          ref: "develop"
 
       - name: Bump Up Version
         run: |
@@ -90,7 +90,7 @@ jobs:
 
       - name: Commit And Push
         run: |
-          git config --local user.name "Version Up Bot"
+          git config --local user.name "Keich.Park"
           git config --local user.email "svclaw2000@gmail.com"
           git commit -am "Bump up version"
           git push

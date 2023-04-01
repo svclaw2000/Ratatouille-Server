@@ -1,8 +1,6 @@
 name: Release Deploy
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 env:
@@ -12,6 +10,7 @@ env:
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: ratatouille-deploy-group
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   build:
@@ -20,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: "develop"
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -71,3 +72,36 @@ jobs:
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --deployment-group-name $CODE_DEPLOY_DEPLOYMENT_GROUP_NAME \
             --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Merge develop to main
+        run: |
+          git checkout main
+          git merge develop
+          git push origin main
+
+      - name: Create Release Tag
+        run: |
+          gh release create $(python scripts/get_version.py) --notes ""
+
+      - name: Bump Up Version
+        run: |
+          python scripts/bump_up_version.py
+
+      - name: Commit And Create Pull Request
+        run: |
+          export newServerVersion=$(python scripts/get_version.py)
+          git checkout -b bump_up_version_$newServerVersion
+          git config --local user.name "Keich.Park"
+          git config --local user.email "svclaw2000@gmail.com"
+          git commit -am "Bump up version $newServerVersion"
+          git push origin bump_up_version_$newServerVersion
+
+      - name: Create and Merge Pull Request
+        run: |
+          gh pr create --title "Bump up version" --body "Bump up version to $newServerVersion" --base develop > pr_path
+          gh pr merge $(cat pr_path) -m --auto

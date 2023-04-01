@@ -78,15 +78,30 @@ jobs:
         with:
           python-version: 3.8
 
+      - name: Setup Git for commit
+        run: |
+          git config --local user.name "Keich.Park"
+          git config --local user.email "svclaw2000@gmail.com"
+
+      - name: Checkout to main
+        uses: actions/checkout@v3
+        with:
+          ref: "main"
+
       - name: Merge develop to main
         run: |
-          git checkout main
-          git merge develop
+          git merge origin/develop --allow-unrelated-histories
           git push origin main
 
       - name: Create Release Tag
         run: |
-          gh release create $(python scripts/get_version.py) --notes ""
+          export currentServerVersion=$(python scripts/get_version.py)
+          gh release create $currentServerVersion --title "$currentServerVersion" --generate-notes
+
+      - name: Checkout to develop
+        uses: actions/checkout@v3
+        with:
+          ref: "develop"
 
       - name: Bump Up Version
         run: |
@@ -96,8 +111,6 @@ jobs:
         run: |
           export newServerVersion=$(python scripts/get_version.py)
           git checkout -b bump_up_version_$newServerVersion
-          git config --local user.name "Keich.Park"
-          git config --local user.email "svclaw2000@gmail.com"
           git commit -am "Bump up version $newServerVersion"
           git push origin bump_up_version_$newServerVersion
 
